@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 import os
 from typing import List, Dict, Any
@@ -11,7 +10,7 @@ class AgentConfig(BaseModel):
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "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")
     LLM_MODEL: str = os.getenv("GROQ_MODEL", "gemma2-9b-it")
     LLM_BASE_URL: str = os.getenv("GROQ_BASE_URL", "https://api.groq.com/")
-    MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", 7000))  # Increased for descriptive answers
+    MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", 7000))
 
     # Agent configuration
     QUALITY_THRESHOLD: float = float(os.getenv("QUALITY_THRESHOLD", 0.5))
@@ -70,7 +69,7 @@ class AgentConfig(BaseModel):
     }
 
     # Profile management
-    PROFILE_DB_PATH: str = "profiles.db"
+    PROFILE_DB_PATH: str = "/tmp/profiles.db"
     MAX_PROFILE_ASSESSMENTS: int = 100
 
     def validate_config(self) -> List[str]:
@@ -112,4 +111,5 @@ if __name__ == "__main__":
             print(f"  - {issue}")
     else:
         print("\nConfiguration is valid")
+
 
