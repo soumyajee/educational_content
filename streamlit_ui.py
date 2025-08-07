@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Streamlit UI for Content Sourcing Agent
+Streamlit UI for Content Sourcing Agent (without Content Sourcing view)
 """
 
 import streamlit as st
@@ -100,7 +100,7 @@ st.write("Last updated: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S IST"))
 
 # Sidebar for navigation and inputs
 st.sidebar.header("Dashboard Controls")
-selected_view = st.sidebar.selectbox("Select View", ["Overview", "Assessments", "Student Report", "Teacher Report", "Content Sourcing"])
+selected_view = st.sidebar.selectbox("Select View", ["Overview", "Assessments", "Student Report", "Teacher Report"])
 query = st.sidebar.text_input("Enter Query", value=os.getenv('TEST_QUERY', 'artificial intelligence in automotive systems'))
 sources_input = st.sidebar.text_area("Enter Sources (comma-separated URLs)", value=",".join(get_config().STATIC_SOURCES))
 sources = [url.strip() for url in sources_input.split(',') if url.strip()]
@@ -219,41 +219,6 @@ elif selected_view == "Teacher Report":
             st.error(teacher_report["error"])
     except Exception as e:
         st.error(f"Error generating teacher report: {e}")
-
-elif selected_view == "Content Sourcing":
-    st.header("Content Sourcing Output")
-    if st.session_state.get('assessments'):
-        st.subheader("Raw Content Fetched")
-        for item in st.session_state.agent.content_api.storage.values():
-            st.write(f"**Title:** {item['title']}")
-            st.write(f"**Content Snippet:** {item['content'][:200]}... (Source: {item['source_url']})")
-            st.write("---")
-
-        st.subheader("Processed Content Items")
-        for item in st.session_state.agent.content_api.storage.values():
-            st.write(f"**ID:** {item['id']}")
-            st.write(f"**Title:** {item['title']}")
-            st.write(f"**Category:** {item['category']}")
-            st.write(f"**Tags:** {', '.join(item['tags'])}")
-            st.write(f"**Quality Score:** {item['quality_score']}")
-            st.write(f"**Bloom Level:** {item['bloom_level']}")
-            st.write("---")
-
-        st.subheader("Stored Content IDs")
-        stored_ids = st.session_state.agent.content_api.storage.keys()
-        st.write(f"**Total Stored Items:** {len(stored_ids)}")
-        st.write(f"**IDs:** {', '.join(stored_ids)}")
-
-        st.subheader("Errors Encountered")
-        errors = st.session_state.get('errors', [])
-        if errors:
-            st.write(f"**Total Errors:** {len(errors)}")
-            for error in errors:
-                st.error(error)
-        else:
-            st.success("No errors encountered during content sourcing.")
-    else:
-        st.write("No content sourcing data available. Run the agent to fetch and process content.")
 
 # Add a footer
 st.sidebar.text("Powered by xAI Grok 3")
