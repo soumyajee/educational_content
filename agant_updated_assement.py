@@ -78,7 +78,7 @@ class AgentState(BaseModel):
     trigger: str = "manual"
 
 class ProfileStorage:
-    def __init__(self, db_path: str = "profiles.db"):
+    def __init__(self, db_path: str = "/tmp/profiles.db"):
         self.db_path = db_path
         self._initialize_db()
 
@@ -968,3 +968,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
