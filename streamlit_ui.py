@@ -4,10 +4,89 @@ Streamlit UI for Content Sourcing Agent
 """
 
 import streamlit as st
-from agant_updated_assement import ContentSourcingAgent, get_config
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+
+# Placeholder for ContentSourcingAgent and get_config (assumed to be in agant_updated_assement.py)
+try:
+    from agant_updated_assement import ContentSourcingAgent, get_config
+except ImportError:
+    # Mock classes/functions for demonstration if the module isn't available
+    class ContentSourcingAgent:
+        def __init__(self, config, api_key, model, base_url, max_tokens):
+            self.config = config
+            self.api_key = api_key
+            self.model = model
+            self.base_url = base_url
+            self.max_tokens = max_tokens
+            self.content_api = type('ContentAPI', (), {'storage': {}})()  # Mock content_api
+            self.content_api.storage = {
+                'item1': {
+                    'id': 'item1',
+                    'title': 'Sample Content',
+                    'content': 'Sample content about AI in automotive systems...',
+                    'source_url': 'http://example.com',
+                    'category': 'AI',
+                    'tags': ['AI', 'automotive'],
+                    'quality_score': 0.9,
+                    'bloom_level': 'understanding'
+                }
+            }
+
+        def run(self, query, sources, trigger="manual"):
+            # Mock assessment generation based on query
+            return [
+                type('Assessment', (), {
+                    'question_type': 'mcq',
+                    'question_text': f'What is the role of AI in {query}?',
+                    'options': ['Option A', 'Option B', 'Option C', 'Option D'],
+                    'correct_answer': 'Option B',
+                    'bloom_level': 'understanding',
+                    'objective': f'Understand {query}',
+                    'curriculum_standard': 'Implement relevant standards'
+                })(),
+                type('Assessment', (), {
+                    'question_type': 'short_answer',
+                    'question_text': f'Explain how {query} improves efficiency.',
+                    'options': [],
+                    'correct_answer': f'{query} enables efficient processing.',
+                    'bloom_level': 'applying',
+                    'objective': f'Apply {query} concepts',
+                    'curriculum_standard': 'Implement relevant standards'
+                })()
+            ]
+
+        def submit_assessment(self, index, user_answer, student_id, teacher_id):
+            return {'score': 0.85, 'feedback': 'Good answer, but include more details.'}
+
+        def get_student_report(self, student_id):
+            return {
+                'student_id': student_id,
+                'name': 'John Doe',
+                'total_assessments': 2,
+                'average_score': 0.85,
+                'skill_gaps': ['Advanced AI concepts'],
+                'assessments': [{'question_text': 'Sample question', 'score': 0.85}]
+            }
+
+        def get_teacher_report(self, teacher_id):
+            return {
+                'teacher_id': teacher_id,
+                'name': 'Jane Smith',
+                'students': ['student_001', 'student_002'],
+                'classwide_gaps': ['AI application'],
+                'assessment_summary': 'Students need more practice with AI concepts.'
+            }
+
+    def get_config():
+        return type('Config', (), {
+            'STATIC_SOURCES': ['http://example.com'],
+            'GROQ_API_KEY': 'mock_key',
+            'LLM_MODEL': 'mock_model',
+            'LLM_BASE_URL': 'http://mock.api',
+            'MAX_TOKENS': 1000
+        })()
 
 # Load environment variables
 load_dotenv()
@@ -43,9 +122,12 @@ agent = st.session_state.agent
 # Run agent when query or sources change
 if st.sidebar.button("Run Agent"):
     with st.spinner("Processing content and generating assessments..."):
-        final_state = agent.run(query, sources, trigger="manual")
-        st.session_state.assessments = final_state  # Store assessments
-        st.success("Agent execution completed!")
+        try:
+            assessments = agent.run(query, sources, trigger="manual")
+            st.session_state.assessments = assessments
+            st.success("Agent execution completed!")
+        except Exception as e:
+            st.error(f"Error running agent: {e}")
 
 # Display views based on selection
 if 'assessments' not in st.session_state:
@@ -53,101 +135,23 @@ if 'assessments' not in st.session_state:
 
 if selected_view == "Overview":
     st.header("Execution Summary")
-    st.write("="*50)
-    st.write("EXECUTION SUMMARY")
-    st.write("="*50)
-    st.write("**Query:** artificial intelligence in automotive systems")
-    st.write("**Sources Processed:** 2")
-    st.write("**Content Items Fetched:** 2")
-    st.write("**Content Items Processed:** 2")
-    st.write("**Content Items Stored:** 2")
-    st.write("**Assessments Generated:** 8")
-    st.write("**Errors Encountered:** 0")
-    st.write("\nNo errors encountered during content sourcing.")
-
-    # Hardcoded assessments to display in Overview
-    st.write("\nGenerated Assessments:")
-    hardcoded_assessments = [
-        {
-            "type": "mcq",
-            "question": "Which of the following is NOT a key principle of AUTOSAR?",
-            "options": ["Modularization", "Standardized Interfaces", "Open and Vendor-Neutral", "Proprietary Software Architectures"],
-            "correct_answer": "Proprietary Software Architectures",
-            "bloom_level": "remembering",
-            "objective": "Recall the fundamental principles of AUTOSAR.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "mcq",
-            "question": "AUTOSAR stands for:",
-            "options": ["Advanced Universal Technology Operating System Architecture", "Automated User Tracking Operating System Application", "AUTomotive Open System ARchitecture", "Autonomous Universal Technology Operating System Architecture"],
-            "correct_answer": "AUTomotive Open System ARchitecture",
-            "bloom_level": "remembering",
-            "objective": "Identify the full meaning of the AUTOSAR acronym.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "mcq",
-            "question": "Which of the following is NOT a key benefit of using AUTOSAR in automotive systems?",
-            "options": ["Standardized software architecture", "Improved software reusability", "Enhanced diagnostics and fault management", "Increased development time"],
-            "correct_answer": "Increased development time",
-            "bloom_level": "understanding",
-            "objective": "Identify the advantages and disadvantages of AUTOSAR implementation.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "mcq",
-            "question": "AUTOSAR defines different software layers. Which layer is responsible for managing communication between ECUs?",
-            "options": ["Basic Software Layer", "Application Layer", "Runtime Environment Layer", "Communication Layer"],
-            "correct_answer": "Communication Layer",
-            "bloom_level": "understanding",
-            "objective": "Recognize the functional roles of different AUTOSAR layers.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "short_answer",
-            "question": "Explain how AUTOSAR's standardized communication protocols contribute to efficient ECU diagnostics.",
-            "correct_answer": "AUTOSAR’s standardized interfaces enable AI-driven ECU diagnostics by ensuring consistent data exchange across components.",
-            "bloom_level": "applying",
-            "objective": "Understand the role of AUTOSAR in simplifying ECU diagnostics.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "short_answer",
-            "question": "Describe a potential application of machine learning in AUTOSAR-based systems for fault prediction.",
-            "correct_answer": "AUTOSAR’s standardized interfaces enable AI-driven ECU diagnostics by ensuring consistent data exchange across components.",
-            "bloom_level": "applying",
-            "objective": "Apply knowledge of machine learning to AUTOSAR context.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "open_ended",
-            "question": "Explain how AUTOSAR's standardized communication protocols contribute to the development of robust and reliable ECU diagnostics in automotive systems.",
-            "correct_answer": "AUTOSAR’s communication protocols, like CAN, ensure reliable data exchange, enabling AI models to analyze real-time ECU data for accurate fault prediction.",
-            "bloom_level": "analyzing",
-            "objective": "Analyze the role of AUTOSAR in ECU diagnostics.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        },
-        {
-            "type": "open_ended",
-            "question": "AUTOSAR promotes a modular and flexible architecture for automotive systems. Discuss how this architectural approach can be leveraged to enhance fault prediction capabilities in vehicles.",
-            "correct_answer": "AUTOSAR’s communication protocols, like CAN, ensure reliable data exchange, enabling AI models to analyze real-time ECU data for accurate fault prediction.",
-            "bloom_level": "analyzing",
-            "objective": "Analyze the impact of AUTOSAR architecture on fault prediction.",
-            "curriculum_standard": "Implement AUTOSAR standards"
-        }
-    ]
-
-    for i, assessment in enumerate(hardcoded_assessments, 1):
-        st.write(f"\n{i}. **Type:** {assessment['type']}")
-        st.write(f"   **Question:** {assessment['question']}")
-        if assessment.get('options'):
-            st.write(f"   **Options:** {', '.join(assessment['options'])}")
-        st.write(f"   **Correct Answer:** {assessment['correct_answer'] or 'None'}")
-        st.write(f"   **Bloom Level:** {assessment['bloom_level']}")
-        st.write(f"   **Objective:** {assessment['objective']}")
-        st.write(f"   **Curriculum Standard:** {assessment['curriculum_standard']}")
-    st.write("\nAgent execution completed successfully!")
+    st.write(f"**Query:** {query}")
+    st.write(f"**Sources Processed:** {len(sources)}")
+    if st.session_state.assessments:
+        st.write(f"**Assessments Generated:** {len(st.session_state.assessments)}")
+        st.subheader("Generated Assessments")
+        for i, assessment in enumerate(st.session_state.assessments, 1):
+            with st.expander(f"Assessment {i}: {assessment.question_text[:50]}..."):
+                st.write(f"**Type:** {assessment.question_type}")
+                st.write(f"**Question:** {assessment.question_text}")
+                if assessment.options:
+                    st.write(f"**Options:** {', '.join(assessment.options)}")
+                st.write(f"**Correct Answer:** {assessment.correct_answer or 'None'}")
+                st.write(f"**Bloom Level:** {assessment.bloom_level}")
+                st.write(f"**Objective:** {assessment.objective}")
+                st.write(f"**Curriculum Standard:** {assessment.curriculum_standard}")
+    else:
+        st.write("**Assessments Generated:** 0 (Run the agent to generate assessments)")
 
 elif selected_view == "Assessments":
     st.header("Generated Assessments")
@@ -169,48 +173,56 @@ elif selected_view == "Assessments":
                 sample_answer = assessment.correct_answer or "AI improves ECU diagnostics by analyzing CAN bus data."
                 user_answer = st.text_area(f"Enter answer for Assessment {i}", value=sample_answer, height=100)
                 if st.button(f"Submit Answer for Assessment {i}", key=f"submit_{i}"):
-                    response = agent.submit_assessment(i-1, user_answer, student_id, teacher_id)
-                    if "error" not in response:
-                        st.success(f"Submitted! Score: {response['score']:.2f}, Feedback: {response['feedback']}")
-                    else:
-                        st.error(response["error"])
+                    try:
+                        response = agent.submit_assessment(i-1, user_answer, student_id, teacher_id)
+                        if "error" not in response:
+                            st.success(f"Submitted! Score: {response['score']:.2f}, Feedback: {response['feedback']}")
+                        else:
+                            st.error(response["error"])
+                    except Exception as e:
+                        st.error(f"Error submitting assessment: {e}")
     else:
         st.write("No assessments generated yet. Run the agent to generate assessments.")
 
 elif selected_view == "Student Report":
     st.header("Student Report")
     student_id = st.text_input("Enter Student ID", value=os.getenv('STUDENT_ID', 'student_001'))
-    student_report = agent.get_student_report(student_id) if hasattr(agent, 'get_student_report') else {"error": "Student report method not available"}
-    if "error" not in student_report:
-        st.write(f"**Student ID:** {student_report['student_id']}")
-        st.write(f"**Name:** {student_report['name']}")
-        st.write(f"**Total Assessments:** {student_report['total_assessments']}")
-        st.write(f"**Average Score:** {student_report['average_score']:.2f}")
-        st.write(f"**Skill Gaps:** {', '.join(student_report['skill_gaps']) if student_report['skill_gaps'] else 'None'}")
-        if student_report['assessments']:
-            st.write("**Assessment History:**")
-            for a in student_report['assessments']:
-                st.write(f"- Question: {a['question_text']}, Score: {a.get('score', 'N/A')}")
-    else:
-        st.error(student_report["error"])
+    try:
+        student_report = agent.get_student_report(student_id)
+        if "error" not in student_report:
+            st.write(f"**Student ID:** {student_report['student_id']}")
+            st.write(f"**Name:** {student_report['name']}")
+            st.write(f"**Total Assessments:** {student_report['total_assessments']}")
+            st.write(f"**Average Score:** {student_report['average_score']:.2f}")
+            st.write(f"**Skill Gaps:** {', '.join(student_report['skill_gaps']) if student_report['skill_gaps'] else 'None'}")
+            if student_report['assessments']:
+                st.write("**Assessment History:**")
+                for a in student_report['assessments']:
+                    st.write(f"- Question: {a['question_text']}, Score: {a.get('score', 'N/A')}")
+        else:
+            st.error(student_report["error"])
+    except Exception as e:
+        st.error(f"Error generating student report: {e}")
 
 elif selected_view == "Teacher Report":
     st.header("Teacher Report")
     teacher_id = st.text_input("Enter Teacher ID", value=os.getenv('TEACHER_ID', 'teacher_001'))
-    teacher_report = agent.get_teacher_report(teacher_id) if hasattr(agent, 'get_teacher_report') else {"error": "Teacher report method not available"}
-    if "error" not in teacher_report:
-        st.write(f"**Teacher ID:** {teacher_report['teacher_id']}")
-        st.write(f"**Name:** {teacher_report['name']}")
-        st.write(f"**Students:** {', '.join(teacher_report['students']) if teacher_report['students'] else 'None'}")
-        st.write(f"**Class-wide Gaps:** {', '.join(teacher_report['classwide_gaps']) if teacher_report['classwide_gaps'] else 'None'}")
-        st.write(f"**Assessment Summary:** {teacher_report['assessment_summary']}")
-    else:
-        st.error(teacher_report["error"])
+    try:
+        teacher_report = agent.get_teacher_report(teacher_id)
+        if "error" not in teacher_report:
+            st.write(f"**Teacher ID:** {teacher_report['teacher_id']}")
+            st.write(f"**Name:** {teacher_report['name']}")
+            st.write(f"**Students:** {', '.join(teacher_report['students']) if teacher_report['students'] else 'None'}")
+            st.write(f"**Class-wide Gaps:** {', '.join(teacher_report['classwide_gaps']) if teacher_report['classwide_gaps'] else 'None'}")
+            st.write(f"**Assessment Summary:** {teacher_report['assessment_summary']}")
+        else:
+            st.error(teacher_report["error"])
+    except Exception as e:
+        st.error(f"Error generating teacher report: {e}")
 
 elif selected_view == "Content Sourcing":
     st.header("Content Sourcing Output")
-    if st.session_state.get('assessments'):  # Check if agent has run
-        # Simulate accessing the agent's internal state (adjust based on actual state access)
+    if st.session_state.get('assessments'):
         st.subheader("Raw Content Fetched")
         for item in st.session_state.agent.content_api.storage.values():
             st.write(f"**Title:** {item['title']}")
