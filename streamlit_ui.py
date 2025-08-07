@@ -92,7 +92,7 @@ except ImportError as e:
 load_dotenv()
 
 # Set page configuration
-st.set_page_config(page_title="Content Sourcing Agent Dashboard", layout="wide")
+st.set_page_config(page_title="Assesment Agent Dashboard", layout="wide")
 
 # Title and timestamp
 st.title("Content Sourcing Agent Dashboard")
@@ -230,3 +230,4 @@ elif selected_view == "Teacher Report":
         st.error(f"Error generating teacher report: {e}")
 
 st.sidebar.text("Powered by xAI Grok 3")
+
