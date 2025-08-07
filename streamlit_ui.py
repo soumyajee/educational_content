@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Streamlit UI for Content Sourcing Agent (without Content Sourcing view)
+Streamlit UI for Content Sourcing Agent
 """
 
 import streamlit as st
@@ -8,11 +8,12 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 
-# Placeholder for ContentSourcingAgent and get_config (assumed to be in agant_updated_assement.py)
+# Import from custom module
 try:
     from agant_updated_assement import ContentSourcingAgent, get_config
-except ImportError:
-    # Mock classes/functions for demonstration if the module isn't available
+except ImportError as e:
+    st.error(f"Failed to import ContentSourcingAgent: {e}")
+    # Fallback mock implementation
     class ContentSourcingAgent:
         def __init__(self, config, api_key, model, base_url, max_tokens):
             self.config = config
@@ -20,7 +21,7 @@ except ImportError:
             self.model = model
             self.base_url = base_url
             self.max_tokens = max_tokens
-            self.content_api = type('ContentAPI', (), {'storage': {}})()  # Mock content_api
+            self.content_api = type('ContentAPI', (), {'storage': {}})()
             self.content_api.storage = {
                 'item1': {
                     'id': 'item1',
@@ -35,7 +36,6 @@ except ImportError:
             }
 
         def run(self, query, sources, trigger="manual"):
-            # Mock assessment generation based on query
             return [
                 type('Assessment', (), {
                     'question_type': 'mcq',
@@ -98,6 +98,10 @@ st.set_page_config(page_title="Content Sourcing Agent Dashboard", layout="wide")
 st.title("Content Sourcing Agent Dashboard")
 st.write("Last updated: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S IST"))
 
+# Debug environment variables
+st.write(f"GROQ_API_KEY: {'Set' if os.getenv('GROQ_API_KEY') else 'Not Set'}")
+st.write(f"TEST_QUERY: {os.getenv('TEST_QUERY', 'Not Set')}")
+
 # Sidebar for navigation and inputs
 st.sidebar.header("Dashboard Controls")
 selected_view = st.sidebar.selectbox("Select View", ["Overview", "Assessments", "Student Report", "Teacher Report"])
@@ -107,15 +111,18 @@ sources = [url.strip() for url in sources_input.split(',') if url.strip()]
 
 # Initialize or reuse agent
 if 'agent' not in st.session_state:
-    config = get_config()
-    agent = ContentSourcingAgent(
-        config=config,
-        api_key=config.GROQ_API_KEY,
-        model=config.LLM_MODEL,
-        base_url=config.LLM_BASE_URL,
-        max_tokens=config.MAX_TOKENS
-    )
-    st.session_state.agent = agent
+    try:
+        config = get_config()
+        st.session_state.agent = ContentSourcingAgent(
+            config=config,
+            api_key=config.GROQ_API_KEY,
+            model=config.LLM_MODEL,
+            base_url=config.LLM_BASE_URL,
+            max_tokens=config.MAX_TOKENS
+        )
+        st.write("Agent initialized successfully")
+    except Exception as e:
+        st.error(f"Failed to initialize agent: {e}")
 
 agent = st.session_state.agent
 
@@ -125,20 +132,21 @@ if st.sidebar.button("Run Agent"):
         try:
             assessments = agent.run(query, sources, trigger="manual")
             st.session_state.assessments = assessments
-            st.success("Agent execution completed!")
+            st.success(f"Agent execution completed! Generated {len(assessments)} assessments")
         except Exception as e:
             st.error(f"Error running agent: {e}")
 
-# Display views based on selection
+# Initialize assessments in session state
 if 'assessments' not in st.session_state:
     st.session_state.assessments = []
 
+# Display views based on selection
 if selected_view == "Overview":
     st.header("Execution Summary")
     st.write(f"**Query:** {query}")
     st.write(f"**Sources Processed:** {len(sources)}")
+    st.write(f"**Assessments Generated:** {len(st.session_state.assessments)}")
     if st.session_state.assessments:
-        st.write(f"**Assessments Generated:** {len(st.session_state.assessments)}")
         st.subheader("Generated Assessments")
         for i, assessment in enumerate(st.session_state.assessments, 1):
             with st.expander(f"Assessment {i}: {assessment.question_text[:50]}..."):
@@ -151,10 +159,11 @@ if selected_view == "Overview":
                 st.write(f"**Objective:** {assessment.objective}")
                 st.write(f"**Curriculum Standard:** {assessment.curriculum_standard}")
     else:
-        st.write("**Assessments Generated:** 0 (Run the agent to generate assessments)")
+        st.warning("No assessments generated. Run the agent to generate assessments.")
 
 elif selected_view == "Assessments":
     st.header("Generated Assessments")
+    st.write(f"Total assessments: {len(st.session_state.assessments)}")
     if st.session_state.assessments:
         for i, assessment in enumerate(st.session_state.assessments, 1):
             with st.expander(f"Assessment {i}: {assessment.question_text[:50]}..."):
@@ -182,7 +191,7 @@ elif selected_view == "Assessments":
                     except Exception as e:
                         st.error(f"Error submitting assessment: {e}")
     else:
-        st.write("No assessments generated yet. Run the agent to generate assessments.")
+        st.warning("No assessments generated yet. Run the agent to generate assessments.")
 
 elif selected_view == "Student Report":
     st.header("Student Report")
@@ -220,5 +229,4 @@ elif selected_view == "Teacher Report":
     except Exception as e:
         st.error(f"Error generating teacher report: {e}")
 
-# Add a footer
 st.sidebar.text("Powered by xAI Grok 3")
